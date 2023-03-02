@@ -46,25 +46,25 @@ from scipy.signal import fftconvolve
 ####Import / Export tools
 
 
-def findFiles (path, filter):
+def _findFiles_(path, filter):
     for root, dirs, files in os.walk(path):
         for file in fnmatch.filter(files, filter):
             yield os.path.join(file)
  
     
  
-def file_array(path, filter):
+def _file_array_(path, filter):
     files = []
-    for textFile in findFiles(path, filter):
+    for textFile in _findFiles_(path, filter):
                 files.append(textFile)
     files = sorted(files)
     return files 
 
 
 
-def load_datasets(datapath, datafilter):
+def _load_datasets_(datapath, datafilter):
     data = dict()
-    files = file_array(datapath,datafilter)
+    files = _file_array_(datapath,datafilter)
     for i,file in enumerate(files):
         print(file)
         timestamp = os.path.getmtime(os.path.join(datapath,file))
@@ -74,7 +74,7 @@ def load_datasets(datapath, datafilter):
 
 
 
-def init_datasets(data):
+def _init_datasets_(data):
     for key in data: 
         trace = data[key]['trace']
         decay = trace.sum(axis=1)
@@ -87,7 +87,7 @@ def init_datasets(data):
 
 
 
-def plot_datasets(data):
+def _plot_datasets_(data):
     fig = make_subplots(rows=1, cols=3)
     for key in data:
         fig.add_trace(go.Scatter(x=data[key]['spectrum'].keys(), y=data[key]['spectrum'].iloc[:], 
@@ -110,7 +110,7 @@ def plot_datasets(data):
     return fig
 
 
-def plot_spectra(data):
+def _plot_spectra_(data):
     fig = make_subplots(rows=1, cols=1)
     for key in data:
         fig.add_trace(go.Scatter(x=data[key]['spectrum'].keys(), y=data[key]['spectrum'].iloc[:], 
@@ -121,7 +121,7 @@ def plot_spectra(data):
     fig.show()
     return fig
 
-def plot_decaycurves(data):
+def _plot_decaycurves_(data):
     fig = make_subplots(rows=1, cols=1)
     for key in data:
         fig.add_trace(go.Scatter(x=data[key]['decay'].keys(), y=data[key]['decay'].iloc[:],
@@ -132,12 +132,12 @@ def plot_decaycurves(data):
     fig.show()
     return fig
 
-def find_nearest(array, value):
+def _find_nearest_(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return idx, array[idx]
 
-def check_options(data, options):
+def _check_options_(data, options):
     for option in ['tstart', 'tstop']: 
         if options[option] == [0]:
             options[option] = []
@@ -171,36 +171,36 @@ def check_options(data, options):
              print("Error")     
                  
     for i,key in enumerate(data):    
-        tstopi, tstop = find_nearest(data[key]['decay'].index, options['tstop'][i])
-        tstarti, tstart = find_nearest(data[key]['decay'].index, options['tstart'][i])
-        lstarti, lstart = find_nearest(data[key]['spectrum'].index.astype('float'), np.float(options['lstart'][i]))
-        lstopi, lstop = find_nearest(data[key]['spectrum'].index.astype('float'), np.float(options['lstop'][i]))
+        tstopi, tstop = _find_nearest_(data[key]['decay'].index, options['tstop'][i])
+        tstarti, tstart = _find_nearest_(data[key]['decay'].index, options['tstart'][i])
+        lstarti, lstart = _find_nearest_(data[key]['spectrum'].index.astype('float'), np.float(options['lstart'][i]))
+        lstopi, lstop = _find_nearest_(data[key]['spectrum'].index.astype('float'), np.float(options['lstop'][i]))
         data[key]['options'] =  {'tstart': tstart, 'tstop': tstop, 'lstart':lstart, 'lstop': lstop, 'tstarti': tstarti, 'tstopi': tstopi, 'lstarti':lstarti, 'lstopi': lstopi}
         data[key]['options']['threshold'] = options['threshold']
         data[key]['options']['convolution'] = options['convolution']
         
         if options['exponents'] == 1 and options['convolution'] == True:
-            data[key]['fitmodel']=Model(fitmodel_1exp_conv)
+            data[key]['fitmodel']=Model(_fitmodel_1exp_conv_)
         elif options['exponents'] == 1 and options['convolution'] == False:
-            data[key]['fitmodel']=Model(fitmodel_1exp)
+            data[key]['fitmodel']=Model(_fitmodel_1exp_)
         elif options['exponents'] == 2 and options['convolution'] == True:
-            data[key]['fitmodel']=Model(fitmodel_2exp_conv)
+            data[key]['fitmodel']=Model(_fitmodel_2exp_conv_)
         elif options['exponents'] == 2 and options['convolution'] == False:
-            data[key]['fitmodel']=Model(fitmodel_2exp)
+            data[key]['fitmodel']=Model(_fitmodel_2exp_)
         elif options['exponents'] == 3 and options['convolution'] == True:
-            data[key]['fitmodel']=Model(fitmodel_3exp_conv)
+            data[key]['fitmodel']=Model(_fitmodel_3exp_conv_)
         elif options['exponents'] == 3 and options['convolution'] == False:
-            data[key]['fitmodel']=Model(fitmodel_3exp)
+            data[key]['fitmodel']=Model(_fitmodel_3exp_)
         elif options['exponents'] == 4 and options['convolution'] == True:
-            data[key]['fitmodel']=Model(fitmodel_4exp_conv)
+            data[key]['fitmodel']=Model(_fitmodel_4exp_conv_)
         elif options['exponents'] == 4 and options['convolution'] == False:
-            data[key]['fitmodel']=Model(fitmodel_4exp)
+            data[key]['fitmodel']=Model(_fitmodel_4exp_)
             
     return data
 
 
 
-def make_weights(fitdata, threshold, t1i, t2i):
+def _make_weights_(fitdata, threshold, t1i, t2i):
     #weights = np.ones_like(fitdata)
     weights = np.zeros_like(fitdata)
     weights = np.array(1 / np.sqrt(fitdata))
@@ -214,18 +214,18 @@ def make_weights(fitdata, threshold, t1i, t2i):
 
 
 
-def init_fitdata(data):
+def _init_fitdata_(data):
     for key in data:
         t1i, t2i, tpeaki = data[key]['options']['tstarti'], data[key]['options']['tstopi'], data[key]['tpeaki']
         l1i, l2i = data[key]['options']['lstarti'], data[key]['options']['lstopi']
         #data[key]['fitdata'] = np.sum(data[key]['trace'].iloc[t1i:t2i+1,l1i:l2i+1],axis=1)
         data[key]['fitdata'] = np.sum(data[key]['trace'].iloc[:,l1i:l2i+1],axis=1)
         data[key]['tail'] = np.sum(data[key]['trace'].iloc[tpeaki:t2i,l1i:l2i],axis=1)
-        data[key]['weights'] = make_weights(data[key]['fitdata'], data[key]['options']['threshold'], t1i, t2i)
+        data[key]['weights'] = _make_weights_(data[key]['fitdata'], data[key]['options']['threshold'], t1i, t2i)
         #print(data[key]['weights'])
     return data
 
-def init_parameters(data):
+def _init_parameters_(data):
     for key in data:
         tail = data[key]['tail'] 
         params = data[key]['fitmodel'].make_params()
@@ -252,7 +252,7 @@ def init_parameters(data):
 
 
 
-def fit_irf(data, irffile, show=False):
+def _fit_irf_(data, irffile, show=False):
     trace = pd.read_csv(irffile, delim_whitespace= True, header=0, index_col=0)
     decay = trace.sum(axis=1)
     spectrum = trace.sum(axis=0)
@@ -280,51 +280,51 @@ def fit_irf(data, irffile, show=False):
     return data
 
 
-def minmax(X):
+def _minmax_(X):
     xmin =  X.min(axis=0)
     return (X - xmin) / (X.max(axis=0) - xmin)
 
 ### Define fitting models and related functions
-def fitmodel_1exp(x, a1, tau1, y0, x0):
+def _fitmodel_1exp_(x, a1, tau1, y0, x0):
         return a1*np.exp(-(x-x0)/tau1)+y0
 
-def fitmodel_2exp(x, a1, tau1, a2, tau2, y0, x0):
+def _fitmodel_2exp_(x, a1, tau1, a2, tau2, y0, x0):
         return a1*np.exp(-(x-x0)/tau1)+a2*np.exp(-(x-x0)/tau2)+y0
     
-def fitmodel_3exp(x, a1, tau1, a2, tau2, a3, tau3, y0, x0):
+def _fitmodel_3exp_(x, a1, tau1, a2, tau2, a3, tau3, y0, x0):
         return a1*np.exp(-(x-x0)/tau1)+a2*np.exp(-(x-x0)/tau2)+a3*np.exp(-(x-x0)/tau3)+y0
 
-def fitmodel_4exp(x, a1, tau1, a2, tau2, a3, tau3, a4, tau4,  y0, x0):
+def _fitmodel_4exp_(x, a1, tau1, a2, tau2, a3, tau3, a4, tau4,  y0, x0):
         return a1*np.exp(-(x-x0)/tau1)+a2*np.exp(-(x-x0)/tau2)+a3*np.exp(-(x-x0)/tau3)+a4*np.exp(-(x-x0)/tau4)+y0
 
-def fitmodel_1exp_conv(x, a1, tau1, y0, x0, irf_shifted=None):
+def _fitmodel_1exp_conv_(x, a1, tau1, y0, x0, irf_shifted=None):
     tmp = fftconvolve(a1*np.exp(-(x)/tau1)+y0, irf_shifted/np.max(irf_shifted), mode='full')
     tmp = shift(tmp,x0,cval=0.0)
     return tmp[0:len(irf_shifted)]
 
-def fitmodel_2exp_conv(x, a1, tau1, a2, tau2, y0, x0, irf_shifted=None):
+def _fitmodel_2exp_conv_(x, a1, tau1, a2, tau2, y0, x0, irf_shifted=None):
     tmp = fftconvolve(a1*np.exp(-(x)/tau1)+a2*np.exp(-(x)/tau2)+y0, irf_shifted/np.max(irf_shifted), mode='full')
     tmp = shift(tmp,x0,cval=0.0)
     return tmp[0:len(irf_shifted)]
     
-def fitmodel_3exp_conv(x, a1, tau1, a2, tau2, a3, tau3, y0, x0, irf_shifted=None):
+def _fitmodel_3exp_conv_(x, a1, tau1, a2, tau2, a3, tau3, y0, x0, irf_shifted=None):
     tmp = fftconvolve(a1*np.exp(-(x)/tau1)+a2*np.exp(-(x)/tau2)+a3*np.exp(-(x)/tau3)+y0, irf_shifted/np.max(irf_shifted), mode='full')
     tmp = shift(tmp,x0,cval=0.0)
     return tmp[0:len(irf_shifted)]
 
-def fitmodel_4exp_conv(x, a1, tau1, a2, tau2, a3, tau3, a4, tau4,  y0, x0, irf_shifted=None):
+def _fitmodel_4exp_conv_(x, a1, tau1, a2, tau2, a3, tau3, a4, tau4,  y0, x0, irf_shifted=None):
     tmp = fftconvolve(a1*np.exp(-(x)/tau1)+a2*np.exp(-(x)/tau2)+a3*np.exp(-(x)/tau3)+a4*np.exp(-(x)/tau4)+y0, irf_shifted/np.max(irf_shifted), mode='full')
     tmp = shift(tmp,x0,cval=0.0)
     return tmp[0:len(irf_shifted)]
 
-def exGaussian(x, tau, mu, sig, ampl):
+def _exGaussian_(x, tau, mu, sig, ampl):
     #Model for fitting and simulating IRF
     #Call exGaussian(x, tau, mu, sig, ampl)
     lam = 1./tau
     return ampl * np.exp(0.5*lam * (2*mu + lam*(sig**2) - 2*x)) *\
            scipy.special.erfc((mu + lam*(sig**2) - x)/(np.sqrt(2)*sig)) 
 
-def to_df(data):
+def _to_df_(data):
     df = pd.DataFrame()
     for key, value in data.items():
         df = df.append(data[key]['fitresult'].params.valuesdict(),ignore_index=True)
@@ -334,7 +334,7 @@ def to_df(data):
     return df
 
 
-def do_fitting(data, show=False):
+def _do_fitting_(data, show=False):
     for key in data:
         print(key)
         fitmodel = data[key]['fitmodel']
@@ -369,7 +369,7 @@ def do_fitting(data, show=False):
             
     return data
 
-def calc_differential_lifetime(data):
+def _calc_differential_lifetime_(data):
         for key in data:
             print(key)
             x=np.array(data[key]['fitdata'].index)
@@ -379,7 +379,7 @@ def calc_differential_lifetime(data):
             data[key]['dtau'] = dtau
         return data
 
-def plot_differential_lifetime(data):
+def _plot_differential_lifetime_(data):
         fig = make_subplots(rows=1, cols=1)
         for i,key in enumerate(data):
                 fig.add_trace(go.Scatter(x=data[key]['decay'].keys(), y=data[key]['dtau'], 
@@ -397,7 +397,7 @@ def plot_differential_lifetime(data):
         return fig
 
 
-def show_fitresults(data):
+def _show_fitresults_(data):
     fig = make_subplots(rows=3, cols=1, row_heights=(0.7, 0.15, 0.15), subplot_titles=('Data and fits', 'Weights', 'Residuals'))
     for key in data:
         #,x = data[key]['decay'].index.values
